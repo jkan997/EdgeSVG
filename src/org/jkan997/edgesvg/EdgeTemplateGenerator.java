@@ -35,9 +35,9 @@ public class EdgeTemplateGenerator {
     List<EdgeImage> edgeImages = new LinkedList<EdgeImage>();
     private Map<String, Boolean> components = new HashMap<String, Boolean>();
     private String srcDir = "/Volumes/MacData/jakaniew/svn/Adobe/EdgeSVG/edge_template";
-    private String destFile = "/Volumes/MacData/jakaniew/svn/Adobe/EdgeSVG/symbol" + System.currentTimeMillis() + ".ansym";
+    private String destFile = null;
     private String st = "symbol_template";
-    private String symbolName = "new_symbol_alfa";
+    private String symbolName = "us_states";
     private ZipOutputStream zos = null;
     private int globalWidth = 600;
     private int globalHeight = 600;
@@ -123,15 +123,43 @@ public class EdgeTemplateGenerator {
         }
     }
 
+    private static String formatTime(String time) {
+        String res = null;
+        if (time.length() == 8) {
+            res = time.substring(0, 4);
+            res += "-";
+            res += time.substring(4, 6);
+            res += "-";
+            res += time.substring(6, 8);
+            return res;
+        }
+
+        if (time.length() == 6) {
+            res = time.substring(0, 4);
+            res += "-";
+            res += time.substring(4, 6);
+            return res;
+        }
+        return res;
+    }
+
     private List<TimelineEvent> getTimelineEvents() {
         List<TimelineEvent> res = new LinkedList<TimelineEvent>();
-        for (TimelinePosition tp : timeline) {
+        Object[] timelineArr = timeline.toArray();
+        for (int i = 0; i<timelineArr.length-1;i++){
+       
+            TimelinePosition tp = (TimelinePosition)timelineArr[i];
             for (TimelineEvent te : tp.getEvents()) {
+                System.out.println(te);
                 res.add(te);
             }
         }
         return res;
     }
+    
+    private final String OPACITY_VISIBLE = "1";
+    private final String OPACITY_HIDDEN =  "0.01";
+
 
     private String processEdgeMainFile(BufferedReader br) throws IOException {
         int eidCounter = 100;
@@ -158,7 +186,8 @@ public class EdgeTemplateGenerator {
             if (line.contains("\"${symbolSelector}\": [")) {
                 for (Map.Entry<String, Boolean> me : components.entrySet()) {
                     boolean visible = me.getValue();
-                    append(sb, "\"${_%s}\": [[\"style\", \"display\", '%s']],\n", me.getKey(), visible ? "block" : "none");
+                    //append(sb, "\"${_%s}\": [[\"style\", \"display\", '%s']],\n", me.getKey(), visible ? "block" : "none");
+                    append(sb, "\"${_%s}\": [[\"style\", \"opacity\", '%s']],\n", me.getKey(), visible ? OPACITY_VISIBLE : OPACITY_HIDDEN);
                 }
                 sb.append(line);
                 continue;
@@ -184,8 +213,13 @@ public class EdgeTemplateGenerator {
                 continue;
 
             }
+            StringBuilder tSb = new StringBuilder();
+            StringBuilder lSb = new StringBuilder();
+            lSb.append("labels:{");
+
             if (line.contains("timeline:")) {
-                append(sb, "timeline: [");
+
+                append(tSb, "timeline: [");
                 boolean first = true;
                 String time = "";
                 String lastTime = "";
@@ -194,21 +228,36 @@ public class EdgeTemplateGenerator {
                     if (first) {
                         first = false;
                     } else {
-                        sb.append(",");
+                        tSb.append(",");
+                        lSb.append(",");
                     }
                     String compId = te.getComponentId();
-                    String display = te.getDisplay();
-                    String displayInv = te.getDisplay(true);
+                    boolean display = te.getDisplay();
+                    String oFrom = display?OPACITY_HIDDEN:OPACITY_VISIBLE;
+                    String oTo = display?OPACITY_VISIBLE:OPACITY_HIDDEN;
+                    //String displayInv = te.getDisplay(true);
                     lastTime = time;
                     time = te.getTime();
                     int edgeTime = eventCounter * stepTime;
-                    append(sb, "{ id: \"eid%d\",", eidCounter++);
-                    append(sb, "tween: [ ");
-                    append(sb, "\"style\", \"${_%s}\", \"display\", '%s', { fromValue: '%s'}], position: %d, duration: 0 }", compId, display, displayInv, edgeTime);
+                    append(tSb, "{ id: \"eid%d\",", eidCounter++);
+                    append(tSb, "tween: [ ");
+                    //append(tSb, "\"style\", \"${_%s}\", \"display\", '%s', { fromValue: '%s'}], position: %d, duration: 0 }", compId, display, displayInv, edgeTime);
+                    append(tSb, "\"style\", \"${_%s}\", \"opacity\", '%s', { fromValue: '%s'}], position: %d, duration: 200 }", compId, oTo, oFrom, edgeTime);
                     if (!lastTime.equals(time)) {
                         eventCounter++;
                     }
+                    String timeStr = time;
+                    if (timeStr.length()>4){
+                        timeStr= timeStr.substring(0,4);
+                    }
+                    String labelText = timeStr + " " + compId.replaceAll("_", " ").trim();
+
+                    append(lSb, "\"%s\":%d", labelText, edgeTime);
+
                 }
+                lSb.append("},");
+                sb.append(lSb);
+                sb.append(tSb);
 
                 continue;
             }
@@ -280,6 +329,7 @@ public class EdgeTemplateGenerator {
     }
 
     public void generateEdgeSymbol() throws IOException {
+        System.out.println("DEST FILE " + destFile);
         zos = new ZipOutputStream(new FileOutputStream(destFile));
         zos.setLevel(9);
         File f = new File(srcDir);
@@ -306,6 +356,14 @@ public class EdgeTemplateGenerator {
 
     public void setGlobalHeight(int globalHeight) {
         this.globalHeight = globalHeight;
+    }
+
+    public String getDestFile() {
+        return destFile;
+    }
+
+    public void setDestFile(String destFile) {
+        this.destFile = destFile;
     }
 
     

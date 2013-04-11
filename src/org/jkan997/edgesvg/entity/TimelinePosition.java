@@ -6,6 +6,8 @@ package org.jkan997.edgesvg.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -21,10 +23,14 @@ public class TimelinePosition {
     public TimelinePosition(JSONObject json) {
         time = json.getString("time");
         JSONArray eventsArr = json.getJSONArray("events");
+        Set<String> cId = new TreeSet<String>();
         for (int i = 0; i < eventsArr.length(); i++) {
             JSONObject teJson = eventsArr.getJSONObject(i);
             TimelineEvent te = new TimelineEvent(teJson);
-            events.add(te);
+            if (!cId.contains(te.getComponentId())){
+                events.add(te);
+                cId.add(te.getComponentId());
+            }
         }
     }
 

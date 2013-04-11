@@ -11,23 +11,33 @@ import org.jkan997.edgesvg.EdgeSvgConverter;
  * @author jakaniew
  */
 public class GenerationThread extends Thread {
+
     public ProgressBar progressBar;
-    
-    
+    private EdgeSvgConverter esc;
+
+    public GenerationThread() {
+        esc = new EdgeSvgConverter();
+    }
+
+    public EdgeSvgConverter getEsc() {
+        return esc;
+    }
+
     public void run() {
-        try{
-               EdgeSvgConverter esc = new EdgeSvgConverter();
-        esc.loadSVG();
-        esc.process();
-        esc.printStruct();
-        esc.saveSymbol();
-        finished();
-        } catch (Exception ex){
+        String msg = "Error occured";
+        try {
+            esc.loadSVG();
+            esc.process();
+            esc.printStruct();
+            esc.saveSymbol();
+            msg = "Generation successful";
+        } catch (Exception ex) {
             ex.printStackTrace();
+        } finally {
+            finished(msg);
         }
     }
-    
-    public void finished(){
-        
+
+    public void finished(String msg) {
     }
 }

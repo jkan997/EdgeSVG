@@ -88,6 +88,10 @@ public class EdgeSvgApp extends javax.swing.JFrame {
             // If Nimbus is not available, you can set the GUI to another look and feel.
         }
         centreWindow(this);
+        
+        this.inputSVGText.setText("/Volumes/MacData/jakaniew/svn/maps/us_states.svg");
+        this.outputEdgeText.setText("/Volumes/MacData/jakaniew/svn/maps/us_states.ansym");
+        
     }
 
     /**
@@ -131,6 +135,7 @@ public class EdgeSvgApp extends javax.swing.JFrame {
         customHeader3 = new org.jkan997.edgesvg.gui.CustomHeader();
         jPanel4 = new javax.swing.JPanel();
         progressBar = new org.jkan997.edgesvg.gui.ProgressBar();
+        jLabel12 = new javax.swing.JLabel();
         logoButton1 = new org.jkan997.edgesvg.gui.LogoButton();
         aboutBtn = new org.jkan997.edgesvg.gui.CustomButton();
 
@@ -247,7 +252,6 @@ public class EdgeSvgApp extends javax.swing.JFrame {
         symbolNameText.setBackground(new java.awt.Color(49, 49, 49));
         symbolNameText.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         symbolNameText.setForeground(new java.awt.Color(255, 255, 255));
-        symbolNameText.setText("new_map_symbol");
 
         jLabel6.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
         jLabel6.setForeground(new java.awt.Color(255, 255, 255));
@@ -285,11 +289,9 @@ public class EdgeSvgApp extends javax.swing.JFrame {
                                 .add(jLabel7, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 126, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(26, 26, 26))
                             .add(jLabel6, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 132, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(symbolNameText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 240, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jPanel3Layout.createSequentialGroup()
-                        .add(21, 21, 21)
+                        .add(27, 27, 27)
                         .add(jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(animations, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                             .add(jPanel3Layout.createSequentialGroup()
@@ -299,8 +301,11 @@ public class EdgeSvgApp extends javax.swing.JFrame {
                                 .add(18, 18, 18)
                                 .add(formatSVG, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel11)))))
-                .add(75, 75, 75))
+                                .add(jLabel11))))
+                    .add(jPanel3Layout.createSequentialGroup()
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(symbolNameText, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 214, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                .add(101, 101, 101))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -343,6 +348,13 @@ public class EdgeSvgApp extends javax.swing.JFrame {
         jPanel4.setBackground(new java.awt.Color(64, 64, 64));
         jPanel4.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(57, 57, 57)));
 
+        jLabel12.setFont(new java.awt.Font("Lucida Grande", 0, 11)); // NOI18N
+        jLabel12.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel12.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        jLabel12.setText("PNG");
+        progressBar.add(jLabel12);
+        jLabel12.setBounds(0, 0, 22, 14);
+
         org.jdesktop.layout.GroupLayout jPanel4Layout = new org.jdesktop.layout.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
         jPanel4Layout.setHorizontalGroup(
@@ -378,7 +390,7 @@ public class EdgeSvgApp extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 526, Short.MAX_VALUE)
+            .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 469, Short.MAX_VALUE)
         );
 
         pack();
@@ -400,7 +412,7 @@ public class EdgeSvgApp extends javax.swing.JFrame {
         fd.setVisible(true);
         String fileName = fd.getFile();
         if (fileName != null) {
-            inputSVGText.setText(fd.getDirectory() + "/" + fileName);
+            inputSVGText.setText(fd.getDirectory() + fileName);
         }
     }//GEN-LAST:event_openSVGMouseClicked
 
@@ -421,20 +433,30 @@ public class EdgeSvgApp extends javax.swing.JFrame {
             fileName += ".ansym";
         }
         if (fileName != null) {
-            this.outputEdgeText.setText(fd.getDirectory() + "/" + fileName);
+            this.outputEdgeText.setText(fd.getDirectory() + fileName);
         }
     }//GEN-LAST:event_openSymbolMouseClicked
 
     private void convertButtonMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_convertButtonMouseClicked
         GenerationThread gt = new GenerationThread() {
             @Override
-            public void finished() {
+            public void finished(String msg) {
                 ProgressBar pb = EdgeSvgApp.this.progressBar;
                 pb.stopBar();
                 pb.setPercent(100);
+                try{
+                Thread.sleep(500);
+                } catch (Exception ex){};
+                pb.setPercent(0);
+                pb.setLabel(msg);
 
             }
         };
+        String destFile = this.outputEdgeText.getText();
+        String inputFile = this.inputSVGText.getText();
+        gt.getEsc().setDestFile(destFile);
+        gt.getEsc().setInputFile(inputFile);
+        System.out.println(inputFile);
         gt.start();
         progressBar.startBar(5);
     }//GEN-LAST:event_convertButtonMouseClicked
@@ -496,6 +518,7 @@ public class EdgeSvgApp extends javax.swing.JFrame {
     private javax.swing.JFormattedTextField jFormattedTextField1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;

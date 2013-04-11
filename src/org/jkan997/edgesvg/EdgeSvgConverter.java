@@ -57,16 +57,17 @@ public class EdgeSvgConverter {
     private Map<String, Boolean> components = new HashMap<String, Boolean>();
     private int noidCounter = 0;
     Document doc = null;
+    private String destFile = null;
+    private String inputFile = null;
 
     public void loadSVG() {
-        DocumentBuilderFactory builderFactory =
-                DocumentBuilderFactory.newInstance();
+        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = null;
         try {
             builder = builderFactory.newDocumentBuilder();
-            String filePath = "/Users/jakaniew/svn/survive/trams_anim.svg";
-            filePath = "/Volumes/MacData/jakaniew/svn/maps/us2.svg";
-            doc = builder.parse(new FileInputStream(filePath));
+            System.out.println("Input SVG file " + inputFile);
+            System.out.println(inputFile);
+            doc = builder.parse(new FileInputStream(inputFile));
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -97,11 +98,11 @@ public class EdgeSvgConverter {
     public void save(Element el, String filePath) throws Exception {
         String d = el.getAttribute("d");
         String id = el.getAttribute("id");
-        
-        if (el.hasAttribute("display")){
+
+        if (el.hasAttribute("display")) {
             el.removeAttribute("display");
         }
-            
+
         Bounds bounds = PathBounds.getBounds(d);
         TransformerFactory transformerFactory = TransformerFactory.newInstance();
         Transformer transformer = transformerFactory.newTransformer();
@@ -135,7 +136,6 @@ public class EdgeSvgConverter {
             ByteArrayInputStream bais = new ByteArrayInputStream(svgBytes);
             Reader r = new InputStreamReader(bais);
             ByteArrayOutputStream os2 = new ByteArrayOutputStream();
-            System.out.println("" + tx + "  " + ty);
             rasterizePNG(r, os2);
             r.close();
             os2.close();
@@ -161,7 +161,6 @@ public class EdgeSvgConverter {
     private StringBuilder timelineSb;
 
     public boolean processScriptText(String sText) {
-        System.out.println("PT");
         boolean res = false;
         compSb = new StringBuilder();
         timelineSb = new StringBuilder();
@@ -177,15 +176,12 @@ public class EdgeSvgConverter {
                 timelineMode = true;
                 compMode = false;
                 res = true;
-                System.out.println("timelineMode");
                 continue;
             }
             if (line.startsWith("this.components =")) {
                 timelineMode = false;
                 compMode = true;
                 res = true;
-                System.out.println("compMode");
-
                 continue;
             }
             if (compMode) {
@@ -218,7 +214,6 @@ public class EdgeSvgConverter {
         for (int i = 0; i < nl.getLength(); i++) {
             Node sNode = nl.item(i);
             if (sNode instanceof CharacterData) {
-                System.out.println("CD");
                 CharacterData cd = (CharacterData) sNode;
                 finish = processScriptText(cd.getData());
                 if (finish) {
@@ -255,17 +250,9 @@ public class EdgeSvgConverter {
                 String key = it.next();
                 components.put(key, compJson.getBoolean(key));
             }
-            /*
-             for (TimelinePosition tp2 : timeline) {
-             System.out.println(tp2);
-             }
-            
-             for (Map.Entry<String,Boolean> me : components.entrySet()) {
-             System.out.println(me.getKey()+": "+me.getValue());
-             }*/
+
             return;
         }
-        //System.out.println(compSb);
     }
     private boolean inRootContainer = false;
 
@@ -282,7 +269,7 @@ public class EdgeSvgConverter {
         EdgeContainer oldContainer = null;
         if ("g".equals(name)) {
             String containerId = el.getAttribute("id");
-            
+
             if (inRootContainer) {
                 oldContainer = currentContainer;
                 currentContainer = new EdgeContainer();
@@ -291,13 +278,11 @@ public class EdgeSvgConverter {
             } else {
                 if (containerId.equals("root")) {
                     inRootContainer = true;
-                    System.out.println("IN ROOT!");
                 }
             }
         }
 
         if ("script".equals(name)) {
-            System.out.println("SCRIPT");
             processScript(el);
         }
         int nlLen = nl.getLength();
@@ -317,13 +302,16 @@ public class EdgeSvgConverter {
 
     public void saveSymbol() throws IOException {
         EdgeTemplateGenerator etg = new EdgeTemplateGenerator();
-        System.out.println("Width: "+width+" Height: "+height);
+        System.out.println("D2 FILE "+destFile);
+        if (destFile != null) {
+            etg.setDestFile(destFile);
+        }
         etg.setGlobalWidth(width);
         etg.setGlobalHeight(height);
         etg.setRootContainer(mainContainer);
         etg.setComponents(components);
         etg.setTimeline(timeline);
-        
+
         etg.generateEdgeSymbol();
     }
 
@@ -356,8 +344,29 @@ public class EdgeSvgConverter {
 
     }
 
+    public String getDestFile() {
+        return destFile;
+    }
+
+    public void setDestFile(String destFile) {
+        this.destFile = destFile;
+    }
+
+    public String getInputFile() {
+        return inputFile;
+    }
+
+    public void setInputFile(String inputFile) {
+        this.inputFile = inputFile;
+    }
+
     public static void main(String[] args) throws Exception {
+        String input = "/Volumes/MacData/jakaniew/svn/maps/us_states.svg";
+        String output = "/Volumes/MacData/jakaniew/svn/maps/us_states.ansym";
+        
         EdgeSvgConverter esc = new EdgeSvgConverter();
+        esc.setInputFile(input);
+        esc.setDestFile(output);
         esc.loadSVG();
         esc.process();
         esc.printStruct();

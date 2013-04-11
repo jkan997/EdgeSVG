@@ -14,12 +14,11 @@ public class TimelineEvent {
 
     public final static String COMPONENT_SHOW = "componentShow";
     public final static String COMPONENT_HIDE = "componentHide";
-    
     private String type;
     private String componentId;
     private String time;
-    
-    public TimelineEvent(JSONObject json){
+
+    public TimelineEvent(JSONObject json) {
         this.type = json.getString("type");
         this.componentId = json.getString("componentId");
         this.time = json.getString("time");
@@ -36,21 +35,26 @@ public class TimelineEvent {
     public String getTime() {
         return time;
     }
-    
-    public String getDisplay(boolean inverse){
+
+    public String getDisplayStr(boolean inverse) {
         boolean val = type.equals(COMPONENT_SHOW);
-        if (inverse) val=!val;
-        return (val?"block":"none");
+        if (inverse) {
+            val = !val;
+        }
+        return (val ? "block" : "none");
     }
-    
-     public String getDisplay(){
-        return getDisplay(false);
+
+    public String getDisplayStr() {
+        return getDisplayStr(true);
+    }
+
+    public boolean getDisplay() {
+        boolean val = type.equals(COMPONENT_SHOW);
+        return val;
     }
 
     @Override
     public String toString() {
         return "TimelineEvent{" + "type=" + type + ", componentId=" + componentId + ", time=" + time + '}';
     }
-    
-    
 }
